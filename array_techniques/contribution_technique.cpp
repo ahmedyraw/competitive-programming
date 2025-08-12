@@ -1,177 +1,83 @@
 /*
 Contribution Technique
-    use: solve problem related to sub-arrays.
-    use: It revolves around the idea of counting how many subarrays
-    contribute to a certain result by preprocessing
-    and using prefix sums and frequency maps, instead of explicitly checking every subarray.
-    example: count sub-arrays that's satisfy the condition.
-    hint: How many previous prefix sums could combine with the current one to give me the answer I need?
-*/
 
+    Purpose:
+    --------
+    Efficiently solve problems related to subarrays, especially counting how many subarrays
+    satisfy certain conditions or computing sums/statistics over subarrays.
+
+    Core Idea:
+    ----------
+    - Avoid explicitly checking every subarray (which is often O(n²) or O(n³)).
+    - Use prefix sums to represent subarray sums as differences of prefix sums.
+    - Maintain a frequency map of prefix sums seen so far.
+    - For each prefix sum, calculate how many previous prefix sums can pair with it
+      to satisfy the problem's condition.
+    - Increment counts accordingly, often achieving O(n) or O(n log n) complexity.
+
+    Why use it?
+    -----------
+    - Naive solutions that check all subarrays are too slow.
+    - The technique efficiently counts subarrays matching criteria like:
+        • Sum equals X
+        • Sum divisible by a number
+        • Problems related to maximum subarray sums (Kadane’s algorithm is related)
+
+    Example:
+    --------
+    Count subarrays whose sum equals X.
+
+    - Let ps[i] = sum(arr[0..i])
+    - Subarray sum arr[l..r] = ps[r] - ps[l-1]
+    - For fixed r, count how many l satisfy ps[r] - ps[l-1] = X
+    - Rearranged: ps[l-1] = ps[r] - X
+    - Use a frequency map to count occurrences of ps[l-1] as you iterate
+
+    Complexity:
+    -----------
+    - Usually O(n) with hash maps (unordered_map)
+    - Sometimes O(n log n) with balanced trees (map)
+
+    Notes:
+    ------
+    - Often combined with prefix sums, coordinate compression, Kadane’s algorithm.
+    - Works well with large sums and constraints due to prefix sum hashing.
+*/
 #include <bits/stdc++.h>
 
 using namespace std;
 using ll = long long;
 
-#define all() st.begin(), st.end();
-
-//problem link:
-//https://cses.fi/problemset/task/1661
-void sol1() {//O(n^3)
-    int n,x; cin >> n >> x;
-    ll arr[n];
-    
-    for(int i=0; i<n; ++i) cin >> arr[i];
-    
-    ll ans = 0;
-    for(int i=0; i<n; ++i) {
-        for(int j=i; j<n; ++j) {
-            ll sum = 0;
-            for(int k=i; k<=j; ++k) {
-                sum += arr[k];
-            }
-            if(sum == x) {
-                ++ans;
-            }
-        }
-    }
-    
-    cout << ans;
-}
-
-//problem link:
-//https://cses.fi/problemset/task/1661
-void sol2() {//O(n^2)
-    int n,x; cin >> n >> x;
-    ll arr[n], ps[n];
-    
-    for(int i=0; i<n; ++i) cin >> arr[i];
-    
-    ll ans = 0;
-    
-    ps[0] = arr[0];
-    for(int i=1; i<n; ++i) {
-        ps[i] = ps[i-1] + arr[i];
-    }
-    
-    for(int i=0; i<n; ++i) {
-        for(int j=i; j<n; ++j) {
-            ll sum = 0;
-            if(i==0) sum = ps[j];
-            else sum = ps[j] - ps[i-1];
-
-            if(sum == x) {
-                ++ans;
-            }
-        }
-    }
-    
-    cout <<  ans;
-}
-
-//problem link:
-//https://cses.fi/problemset/task/1661
-void sol3() {//O(n) using contribution technique
-    int n,x; cin >> n >> x;
-    ll arr[n], ps[n];
-    
-    for(int i=0; i<n; ++i) cin >> arr[i];
-    
-    ll ans = 0;
-    map<ll,ll> freq;
-    
-    ps[0] = arr[0];
-    for(int i=1; i<n; ++i) {
-        ps[i] = ps[i-1] + arr[i];
-    }
-
-    ++freq[0];
-    for(int i=0; i<n; ++i) {
-        ll searchValue = ps[i] - x;// ps[r] - ps[l-1] == x so ps[l+1] == ps[r] - x so you are searching for ps[r] - x
-        ans+=freq[searchValue];
-        ++freq[ps[i]];
-    }
-    
-    cout <<  ans;
-}
-
-//problem link:
-//https://cses.fi/problemset/task/1661
-void sol4() {//O(n) using contribution technique
-
-    int n, x; cin >> n >> x;
-    
-    ll ans = 0, sum = 0;
-    map<ll,ll> freq;
-
-    ++freq[0];
-    for(int i=0; i<n; ++i) {
-        ll a; cin >> a;
-        sum += a;
-        ll searchValue = sum - x;
-        ans+=freq[searchValue];
-        ++freq[sum];
-    }
-    
-    cout << ans;
-}
-
-//problem link:
-//https://cses.fi/problemset/task/1643
-void sol5() {//O(n) Kadane Algorithm for finding maximum sub-array sum
-
-    int n; cin >> n;
-    
-    ll sum = 0, ans = LLONG_MIN, mn = 0LL;
-    
-    for(int i=0; i<n; ++i) {
-        ll a; cin >> a;
-        sum += a;
-        ans = max(ans, sum-mn);
-        mn = min(mn, sum);
-    }
-    
-    cout << ans;
-}
-
-//problem link:
-//https://cses.fi/problemset/task/1662
-void sol6() {
-
-    int n; cin >> n;
-    ll arr[n], ps[n];
-    map<ll,ll> freq;
-    ll ans = 0;
-
-    for(int i=0; i<n; ++i) cin >> arr[i];
-
-    ps[0] = (((arr[0]%n)+n)%n);
-    for(int i=1; i<n; ++i) {
-        ps[i] = ps[i-1] + arr[i];
-        ps[i] = (((ps[i]%n)+n)%n);
-    }
-
-    ++freq[0];
-    
-    for(int i=0; i<n; ++i) {
-        ll searchValue = ps[i];// ps[r] - ps[l-1] == 0 so ps[r] == ps[l-1] so you are searching for the same prefix
-        ans+=freq[searchValue];
-        ++freq[ps[i]];
-    }
-    
-    cout << ans;
-}
+const int N = 2e5+5;
+ll arr[N], ps[N];
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
 
-    // sol1();
-    // sol2();
-    // sol3();
-    // sol4();
-    // sol5();
-    // sol6();
-    
+    int n; cin >> n;
+    ll x; cin >> x;
+
+    for(int i = 0; i < n; i++) cin >> arr[i];
+
+    ps[0] = arr[0];
+    for(int i = 1; i < n; i++) ps[i] = ps[i-1] + arr[i];
+
+    // ps[i] - ps[w] = x --> ps[w] = ps[i] - x
+    // We search for prefix sums equal to (ps[i] - x) in previously seen prefix sums.
+
+    map<ll, ll> frq;
+    ll ans = 0;
+
+    // Count empty prefix sum occurrence for subarrays starting at index 0
+    // When l = 0
+    ++frq[0];
+
+    for(int i = 0; i < n; ++i) {
+        ll searchValue = ps[i] - x;
+        ans += frq[searchValue];  // Add how many prefix sums match the required value, **seen so far**
+        ++frq[ps[i]];             // Register current prefix sum
+    }
+
+    cout << ans << '\n';
+
     return 0;
 }

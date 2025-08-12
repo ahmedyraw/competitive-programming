@@ -1,82 +1,97 @@
 /*
 Coordinate Compression
-    frequency:
-        array: if the array size is e5 or e6 that is okay
-            increment op and access op O(1)
-        map: if e18 (long long) you should use map here
-            increment op and access op O(log(n))
-            
-        use: but what if you want to use array for frequency with
-        large numbers such as e18? use coordinate compression!
 
-        example1: {1, 5, 7, 9} equal {1, 2, 3, 4}
-        example2: {1, 1, 5, 15, 17, 17} equal {1, 1, 2, 3, 4, 4}
+    Why coordinate compression?
+    ---------------------------
+    When dealing with frequency counts or indexing based on array values, 
+    using a direct array is efficient if the values are small or moderate (e.g., up to 1e5 or 1e6).
+    - Access and update operations on such arrays take O(1) time.
 
-        the n (array size) in question = e5 or e6 and numbers range e18,
-        so the maximum difference is <= e5 or e6
+    But if the values are large (e.g., up to 1e18), 
+    using a direct array is impossible due to memory constraints.
+    Instead, one might use a map (like std::map or std::unordered_map),
+    but map operations take O(log n) time, which may be slower.
 
-        the differences are not important!
+    Coordinate compression bridges this gap by:
+    - Mapping large values into a smaller continuous range [0..k-1],
+      where k is the number of unique values (usually <= n).
+    - Then frequency/count arrays or other data structures can be used efficiently.
 
-        how to create compression array?
-        example:
-        problem array: {1,2,1,3,1,5}
-        sorted array: {1,1,1,2,3,5}
-        give id for each number that represent how many number are less than it
-        compression array: {0,0,0,1,2,3}
-        unique compression array: {0,1,2,3}
-        now how can we know many numbers are less using the index
+    Examples:
+    1) Original array: {1, 5, 7, 9} 
+       Compressed:      {0, 1, 2, 3}
 
-        int arr[] = {10,50,30,50,10,30};
+    2) Original array: {1, 1, 5, 15, 17, 17}
+       Compressed:      {0, 0, 1,  2,  3,  3}
 
-        vector<int> v = {10,50,30,50,10,30};//original values
-        sort(v.begin(), v.end());// {10,10,30,30,50,50}
+    Key insight:
+    - The exact values are replaced by their ranks or positions after sorting unique elements.
+    - The differences between values are not important — only their relative order.
 
-        v.erase(unique(v.begin(), v.end()), v.end());// {10,30,50}
-        //The bellow loop will assign elements of arr[i] by there id {0,1,2}
-        //arr = {0,2,1,2,0,1}
-        for(int i=0; i<7; ++i) {
-            arr[i] = lower_bound(v.begin(), v.end(), arr[i]) - v.begin();
-        }
+    How to create the compression array?
+    ------------------------------------
+    Suppose problem array: {1, 2, 1, 3, 1, 5}
+    Sorted array:           {1, 1, 1, 2, 3, 5}
+    Unique values:          {1, 2, 3, 5}
+    
+    Assign each original element an ID equal to how many unique numbers are smaller:
+    Compressed array:       {0, 1, 0, 2, 0, 3}
 
-        for(auto i : arr) {//compressed 
-            cout << i << " " << v[i] << endl;
-        }
+    Another concrete example:
+    -------------------------
+    int arr[] = {10, 50, 30, 50, 10, 30};
+    
+    vector<int> v(arr,arr+n) // original values
+    sort(v.begin(), v.end());                 // v = {10, 10, 30, 30, 50, 50}
+    v.erase(unique(v.begin(), v.end()), v.end()); // v = {10, 30, 50}
+    
+    // Replace each arr[i] by its compressed id (index in v)
+    for (int i = 0; i < n; ++i) {
+        arr[i] = lower_bound(v.begin(), v.end(), arr[i]) - v.begin();
+    }
+    // arr becomes: {0, 2, 1, 2, 0, 1}
 
-        //arr -> id or index of the original value in v
-        //v   -> value
+    // Now, arr holds compressed indices, and v holds the original values for reference.
+
+    Summary:
+    --------
+    - Use coordinate compression when original values are large but count of distinct values is small.
+    - It allows usage of arrays and efficient algorithms where otherwise maps or trees would be required.
+    - Typically involves sorting unique values and mapping original values to their rank.
 */
-
-//problem link:
-//https://codeforces.com/group/9QrbarK7qH/contest/449618/problem/C
 #include <bits/stdc++.h>
 
 using namespace std;
 using ll = long long;
 
 struct coordinateCompression {
-    private:
-        vector<ll> init;
+private:
+    vector<ll> init;
     
-        void compress(vector<ll>& v) {
-            sort(v.begin(), v.end());
-            v.erase(unique(v.begin(), v.end()), v.end());
-        }
+    void compress(vector<ll>& v) {
+        sort(v.begin(), v.end());
+        v.erase(unique(v.begin(), v.end()), v.end());
+    }
     
-    public:
-        coordinateCompression(vector<ll>& v) {
-            init = v;
-            compress(init);
-        }
-    
-        ll index(ll val) {
-            return lower_bound(init.begin(), init.end(), val) - init.begin();
-        }
-    
-        ll initVal(int index) {
-                return init[index];
-        }
+public:
+    coordinateCompression(vector<ll>& v) {
+        init = v;
+        compress(init);
+    }
+
+    //return index
+    ll index(ll val) {
+        return lower_bound(init.begin(), init.end(), val) - init.begin();
+    }
+
+    //return value
+    ll initVal(int index) {
+        return init[index];
+    }
 };
 
+//problem link:
+//https://codeforces.com/group/9QrbarK7qH/contest/449618/problem/C
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr);

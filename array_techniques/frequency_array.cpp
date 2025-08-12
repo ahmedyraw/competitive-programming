@@ -1,62 +1,60 @@
 /*
 Frequency Array
-    1- Array for known set
-        int freq[N] = {}; ++freq[element];
-    2- Map for unknown set
-        map<int>mp; ++mp[element];
+    use: frequency array counts how many times each possible value appears in your input.
+        1- array for known set or small range
+            int freq[N] = {}; ++freq[element];
+        2- map or unordered_map for unknown set or large range
+            map<int>mp; ++mp[element];
         
     can be used for:
-    1- digits [0-9] arr[10]
-    2- small chars [a-z] arr[26]
-    3- capital chars [A-Z] arr[26]
-    4- mixed-case letters [a-Z] arr[52]
-    5- strings (with map)
+        1- digits [0-9] arr[10]
+        2- small chars [a-z] arr[26]
+        3- capital chars [A-Z] arr[26]
+        4- mixed-case letters [a-Z] arr[52]
+        5- strings (with map or unordered_map)
 
     hints:
-    don't forget to assign freq array by 0, arr = {} or make it global 
-    for chars arr[ch-'a'] or arr[ch-'A'], i+'a' or i+'A'
-    you can accept number as chars ex: 1230 as '1' '2' '3' '0'
+        1- don't forget to assign freq array by 0, arr = {} or make it global 
+        2- for chars arr[ch-'a'] or arr[ch-'A'], i+'a' or i+'A'
+        3- you can accept number as chars ex: 1230 as '1' '2' '3' '0'
 */
-
-//problem link:
-//https://codeforces.com/group/3nQaj5GMG5/contest/372026/problem/A
 #include <bits/stdc++.h>
 
 using namespace std;
 
+const int N = 1e5+5;
+int freq[N];//Global all values assigned to 0 by default
+
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
 
-    int freq[26] = {};
-    int n, k; cin >> n >> k;
+
+    int num;
+    for(int i=0; i<N; i++) {
+        cin >> num;
+        ++freq[num];
+    }
+    
+    int frq[26]={0};//Local all values assigned to 0
     string s; cin >> s;
-    bool vis[n] = {};
-
-    for (int i = 0; i < n; i++) ++freq[s[i] - 'a'];
-
-    for(int i=0; i<26; ++i) {
-        if(k < 1) break;
-        if(freq[i] > k) {
-            freq[i] -= k;
-            k = 0;
-        } else {
-            k -= freq[i];
-            freq[i] = 0;
-        }
+    for(int i=0; i<s.length(); i++) {
+        frq[s[i]-'a']++;
+        //or
+        frq[s[i]-'A']++;
+    }
+    for(int i=0; i<26; i++) {
+        cout << char(i+'a') << '\n';
+        //or
+        cout << char(i+'A') << '\n';
     }
 
-    for(int i = n-1; i>=0; --i) {
-        if(freq[s[i]-'a']) {
-            --freq[s[i]-'a'];
-        }
-        else
-            vis[i] = true;
-    }
-
-    for(int i=0; i<n; ++i) {
-        if(!vis[i])
-            cout << s[i];
+    string arr[N];
+    map<string, int> mp;
+    unordered_map<string, int> omp;
+    for(int i=0; i<N; ++i) {
+        cin >> arr[i];
+        ++mp[arr[i]];
+        // or
+        ++omp[arr[i]];
     }
     
     return 0;
